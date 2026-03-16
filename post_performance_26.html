@@ -1,0 +1,202 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.wrap { padding: 1rem 0; }
+.tab-row { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.tab { padding: 5px 14px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); font-size: 12px; cursor: pointer; background: var(--color-background-primary); color: var(--color-text-secondary); }
+.tab.active { background: #1F3864; color: #fff; border-color: #1F3864; }
+.sort-row { display: flex; gap: 6px; margin-bottom: 1rem; align-items: center; flex-wrap: wrap; }
+.sort-label { font-size: 11px; color: var(--color-text-tertiary); }
+.sort-btn { padding: 3px 10px; border-radius: 10px; border: 0.5px solid var(--color-border-secondary); font-size: 11px; cursor: pointer; background: var(--color-background-primary); color: var(--color-text-secondary); }
+.sort-btn.active { background: #2E75B6; color: #fff; border-color: #2E75B6; }
+.summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin-bottom: 1.25rem; }
+.summary-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+.summary-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 3px; }
+.summary-value { font-size: 18px; font-weight: 500; color: var(--color-text-primary); }
+.summary-sub { font-size: 10px; color: var(--color-text-tertiary); margin-top: 2px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { background: #1F3864; color: #fff; padding: 8px 10px; text-align: center; font-weight: 500; white-space: nowrap; border: 0.5px solid #2E4E7E; }
+th.left { text-align: left; }
+td { padding: 7px 10px; border: 0.5px solid var(--color-border-tertiary); vertical-align: middle; color: var(--color-text-primary); }
+tr:nth-child(even) td { background: var(--color-background-secondary); }
+tr:hover td { background: var(--color-background-info); }
+.type-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 8px; white-space: nowrap; }
+.reel { background: #FAEEDA; color: #633806; }
+.slide { background: #D6E4F7; color: #1F3864; }
+.img { background: #E2EFDA; color: #375623; }
+.eng-bar { display: flex; align-items: center; gap: 6px; }
+.bar-bg { flex: 1; height: 6px; border-radius: 3px; background: var(--color-border-tertiary); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; background: #1D9E75; }
+.bar-fill.high { background: #1D9E75; }
+.bar-fill.mid { background: #BA7517; }
+.bar-fill.low { background: #E24B4A; }
+.eng-val { font-size: 11px; font-weight: 500; min-width: 42px; text-align: right; }
+.title-cell { max-width: 220px; }
+.title-main { font-size: 12px; color: var(--color-text-primary); line-height: 1.4; }
+.title-link { font-size: 10px; color: var(--color-text-info); text-decoration: none; }
+.title-link:hover { text-decoration: underline; }
+.num { text-align: right; white-space: nowrap; }
+.rank-badge { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; font-size: 10px; font-weight: 500; }
+.rank-1 { background: #EF9F27; color: #fff; }
+.rank-2 { background: #B4B2A9; color: #fff; }
+.rank-3 { background: #97C459; color: #fff; }
+.rank-n { background: var(--color-background-secondary); color: var(--color-text-tertiary); }
+</style>
+
+<div class="wrap">
+  <div class="tab-row" id="tab-bar">
+    <button class="tab active" data-month="all">전체 (1~3월)</button>
+    <button class="tab" data-month="2601">1월</button>
+    <button class="tab" data-month="2602">2월</button>
+    <button class="tab" data-month="2603">3월</button>
+  </div>
+
+  <div id="summary-area"></div>
+
+  <div class="sort-row">
+    <span class="sort-label">정렬:</span>
+    <button class="sort-btn active" data-sort="engagement">인게이지먼트율</button>
+    <button class="sort-btn" data-sort="views">조회수</button>
+    <button class="sort-btn" data-sort="reach">도달수</button>
+    <button class="sort-btn" data-sort="likes">좋아요</button>
+    <button class="sort-btn" data-sort="share">공유</button>
+    <button class="sort-btn" data-sort="save">저장</button>
+    <button class="sort-btn" data-sort="comment">댓글</button>
+  </div>
+
+  <div style="overflow-x:auto">
+    <table id="post-table">
+      <thead>
+        <tr>
+          <th style="width:28px">#</th>
+          <th class="left">콘텐츠</th>
+          <th style="width:60px">유형</th>
+          <th style="width:80px">월</th>
+          <th style="width:72px">조회수</th>
+          <th style="width:72px">도달수</th>
+          <th style="width:150px">인게이지먼트율</th>
+          <th style="width:52px">좋아요</th>
+          <th style="width:52px">공유</th>
+          <th style="width:52px">저장</th>
+          <th style="width:52px">댓글</th>
+          <th style="width:52px">팔로우</th>
+        </tr>
+      </thead>
+      <tbody id="post-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const POSTS = [{"ym":"260101","month":"2601","type":"Instagram 릴스","views":1310.0,"reach":967.0,"likes":48.0,"share":4.0,"follow":0.0,"comment":4.0,"save":7.0,"engagement":6.51,"title":"💪 사장님! 올해는 꼭 뜨셔야죠!","link":"https://www.instagram.com/reel/DS9nD97kZ1i/"},{"ym":"260101","month":"2601","type":"Instagram 릴스","views":985.0,"reach":789.0,"likes":44.0,"share":3.0,"follow":0.0,"comment":3.0,"save":6.0,"engagement":7.1,"title":"💪 사장님! 올해는 꼭 뜨셔야죠! (ver.2)","link":"https://www.instagram.com/reel/DS9mRCaETm4/"},{"ym":"260101","month":"2601","type":"Instagram 슬라이드","views":23145.0,"reach":6339.0,"likes":693.0,"share":821.0,"follow":294.0,"comment":634.0,"save":63.0,"engagement":34.88,"title":"#EVENT 뜨싶사 소문내기 이벤트📢","link":"https://www.instagram.com/p/DTAB3bWkbq6/"},{"ym":"260101","month":"2601","type":"Instagram 슬라이드","views":6911.0,"reach":24849.0,"likes":27.0,"share":7.0,"follow":1.0,"comment":3.0,"save":39.0,"engagement":0.39,"title":"공개되자마자 화제의 중심인 <흑백요리사 시즌 2>🔥","link":"https://www.instagram.com/p/DTRw8mHkafa/"},{"ym":"260101","month":"2601","type":"Instagram 릴스","views":3433.0,"reach":2237.0,"likes":96.0,"share":4.0,"follow":3.0,"comment":10.0,"save":24.0,"engagement":6.03,"title":"티오더 X 장호준 셰프 뜨고 싶은 사장님을 찾아라🔥","link":"https://www.instagram.com/reel/DTAG4CokUIB/"},{"ym":"260101","month":"2601","type":"Instagram 릴스","views":3099.0,"reach":2484.0,"likes":75.0,"share":2.0,"follow":1.0,"comment":3.0,"save":10.0,"engagement":1.69,"title":"<흑백요리사> <블루리본> 맛집의 치트키는?🍽️","link":"https://www.instagram.com/reel/DTPr6KVkbzK/"},{"ym":"260101","month":"2601","type":"Instagram 슬라이드","views":1883.0,"reach":621.0,"likes":48.0,"share":4.0,"follow":2.0,"comment":3.0,"save":9.0,"engagement":10.31,"title":"💪 사장님! 올해는 꼭 뜨셔야죠! (카드뉴스)","link":"https://www.instagram.com/p/DS9nQWikQhb/"},{"ym":"260101","month":"2601","type":"Instagram 슬라이드","views":1498.0,"reach":524.0,"likes":32.0,"share":2.0,"follow":0.0,"comment":1.0,"save":9.0,"engagement":5.87,"title":"요즘 냉부해로 화제인 박은영 셰프가 직접 사용해본 티오더✨","link":"https://www.instagram.com/p/DTCJFwKEyqO/"},{"ym":"260101","month":"2601","type":"Instagram 슬라이드","views":1355.0,"reach":560.0,"likes":40.0,"share":1.0,"follow":0.0,"comment":0.0,"save":6.0,"engagement":8.39,"title":"t'able ep.14 공개📖","link":"https://www.instagram.com/p/DToO-Enkx8d/"},{"ym":"260101","month":"2601","type":"Instagram 슬라이드","views":1165.0,"reach":457.0,"likes":40.0,"share":2.0,"follow":1.0,"comment":0.0,"save":3.0,"engagement":9.85,"title":"요즘 냉부해에 출연 중인 박은영 셰프도 인정한 티오더!","link":"https://www.instagram.com/p/DTB6y8pEo9f/"},{"ym":"260101","month":"2601","type":"Instagram 슬라이드","views":1288.0,"reach":444.0,"likes":41.0,"share":4.0,"follow":0.0,"comment":0.0,"save":2.0,"engagement":10.59,"title":"외식업계 최초! 맛집 다큐 📽️","link":"https://www.instagram.com/p/DTe0EMRE2O3/"},{"ym":"260202","month":"2602","type":"Instagram 슬라이드","views":906.0,"reach":354.0,"likes":16.0,"share":1.0,"follow":0.0,"comment":2.0,"save":6.0,"engagement":7.06,"title":"티오더가 '뜨고 싶은 사장님'을 위해 달린 이유🔥","link":"https://www.instagram.com/p/DUm_pICETP3/"},{"ym":"260202","month":"2602","type":"Instagram 슬라이드","views":718.0,"reach":286.0,"likes":13.0,"share":1.0,"follow":0.0,"comment":2.0,"save":4.0,"engagement":6.99,"title":"사장님! 2월 주문하신 뉴스 나왔습니다🧾","link":"https://www.instagram.com/p/DU7ZUKdESEB/"},{"ym":"260202","month":"2602","type":"Instagram 슬라이드","views":1125.0,"reach":439.0,"likes":17.0,"share":6.0,"follow":0.0,"comment":0.0,"save":3.0,"engagement":5.92,"title":"🏆 제 2회 티오더 파트너스 데이 현장 대공개!","link":"https://www.instagram.com/p/DUkUWhlkSqV/"},{"ym":"260202","month":"2602","type":"Instagram 슬라이드","views":1202.0,"reach":490.0,"likes":17.0,"share":2.0,"follow":3.0,"comment":0.0,"save":5.0,"engagement":4.9,"title":"🎖️ 손님들이 인정한 재방문 맛집","link":"https://www.instagram.com/p/DUaHOEGEf6S/"},{"ym":"260202","month":"2602","type":"Instagram 릴스","views":829.0,"reach":576.0,"likes":11.0,"share":1.0,"follow":0.0,"comment":2.0,"save":7.0,"engagement":3.65,"title":"올해 더 잘되고 싶은 사장님을 위해","link":"https://www.instagram.com/reel/DUnCJagkU7Y/"},{"ym":"260308","month":"2603","type":"Instagram 슬라이드","views":560.0,"reach":208.0,"likes":13.0,"share":1.0,"follow":0.0,"comment":10.0,"save":6.0,"engagement":14.42,"title":"📝 댓글에 '반려동물'이라고 남겨주시면 자세한 매뉴얼을 보내드려요!","link":"https://www.instagram.com/p/DVpzyevkYOB/"},{"ym":"260311","month":"2603","type":"Instagram 슬라이드","views":539.0,"reach":200.0,"likes":13.0,"share":2.0,"follow":0.0,"comment":2.0,"save":6.0,"engagement":11.5,"title":"테이블오더 비용이 부담이었다면? 서두르세요🔥","link":"https://www.instagram.com/p/DVvDI3HEepW/"},{"ym":"260307","month":"2603","type":"Instagram 슬라이드","views":1094.0,"reach":441.0,"likes":33.0,"share":3.0,"follow":0.0,"comment":2.0,"save":10.0,"engagement":10.88,"title":"#EVENT 🎬 <우리는 매일매일> 예매권 증정 이벤트","link":"https://www.instagram.com/p/DVdDfS6ETTP/"},{"ym":"260311","month":"2603","type":"Instagram 릴스","views":716.0,"reach":508.0,"likes":13.0,"share":3.0,"follow":0.0,"comment":2.0,"save":8.0,"engagement":5.12,"title":"흑백요리사 장호준 셰프도 선택한 티오더✨","link":"https://www.instagram.com/reel/DVvO93EEYyM/"},{"ym":"260307","month":"2603","type":"Instagram 릴스","views":666.0,"reach":508.0,"likes":16.0,"share":2.0,"follow":0.0,"comment":2.0,"save":6.0,"engagement":5.12,"title":"티오더로 주문해본 네기스키야키🧑🏻‍🍳","link":"https://www.instagram.com/reel/DViMLblEU6P/"},{"ym":"260311","month":"2603","type":"Instagram 릴스","views":587.0,"reach":439.0,"likes":12.0,"share":0.0,"follow":0.0,"comment":2.0,"save":5.0,"engagement":4.33,"title":"처음엔 반신반의했는데","link":"https://www.instagram.com/reel/DVvJia2kcdO/"},{"ym":"260307","month":"2603","type":"Instagram 릴스","views":926.0,"reach":643.0,"likes":13.0,"share":2.0,"follow":0.0,"comment":2.0,"save":6.0,"engagement":3.58,"title":"매출이 오른 고깃집 사장님이","link":"https://www.instagram.com/reel/DViLVHzEU_8/"}];
+
+function fmt(n){ if(n>=1000) return (Math.round(n/100)/10)+'K'; return String(Math.round(n)); }
+function typeClass(t){ if(t.includes('릴스')) return 'reel'; if(t.includes('슬라이드')) return 'slide'; return 'img'; }
+function typeLabel(t){ if(t.includes('릴스')) return '릴스'; if(t.includes('슬라이드')) return '슬라이드'; return '이미지'; }
+function monthLabel(m){ return m.slice(2)+'월'; }
+
+let curMonth = 'all', curSort = 'engagement';
+
+function getFiltered(){
+  return POSTS.filter(p => curMonth === 'all' || p.month === curMonth);
+}
+
+function getSorted(posts){
+  return [...posts].sort((a,b) => b[curSort] - a[curSort]);
+}
+
+function renderSummary(posts){
+  const totalViews = posts.reduce((s,p)=>s+p.views,0);
+  const totalReach = posts.reduce((s,p)=>s+p.reach,0);
+  const totalLikes = posts.reduce((s,p)=>s+p.likes,0);
+  const totalShare = posts.reduce((s,p)=>s+p.share,0);
+  const totalSave  = posts.reduce((s,p)=>s+p.save,0);
+  const totalComment = posts.reduce((s,p)=>s+p.comment,0);
+  const totalFollow = posts.reduce((s,p)=>s+p.follow,0);
+  const engRate = totalReach > 0 ? ((totalLikes+totalShare+totalSave+totalComment)/totalReach*100).toFixed(2) : '-';
+  const reelCount = posts.filter(p=>p.type.includes('릴스')).length;
+  const slideCount = posts.filter(p=>p.type.includes('슬라이드')).length;
+
+  document.getElementById('summary-area').innerHTML = `
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-label">게시물 수</div>
+        <div class="summary-value">${posts.length}개</div>
+        <div class="summary-sub">슬라이드 ${slideCount} · 릴스 ${reelCount}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">총 조회수</div>
+        <div class="summary-value">${fmt(totalViews)}</div>
+        <div class="summary-sub">도달 ${fmt(totalReach)}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">인게이지먼트율</div>
+        <div class="summary-value">${engRate}%</div>
+        <div class="summary-sub">좋아요+공유+저장+댓글 기준</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">팔로우 증가</div>
+        <div class="summary-value">${fmt(totalFollow)}</div>
+        <div class="summary-sub">공유 ${fmt(totalShare)} · 저장 ${fmt(totalSave)}</div>
+      </div>
+    </div>`;
+}
+
+function renderTable(posts){
+  const maxEng = Math.max(...posts.map(p=>p.engagement), 1);
+  const sorted = getSorted(posts);
+  const tbody = document.getElementById('post-tbody');
+  tbody.innerHTML = sorted.map((p,i) => {
+    const eng = p.engagement;
+    const barClass = eng >= 10 ? 'high' : eng >= 5 ? 'mid' : 'low';
+    const barWidth = Math.round(eng/maxEng*100);
+    const rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+    return `<tr>
+      <td style="text-align:center"><span class="rank-badge ${rankClass}">${i+1}</span></td>
+      <td class="title-cell">
+        <div class="title-main">${p.title}</div>
+        <a class="title-link" href="${p.link}" target="_blank">게시물 보기 →</a>
+      </td>
+      <td style="text-align:center"><span class="type-badge ${typeClass(p.type)}">${typeLabel(p.type)}</span></td>
+      <td style="text-align:center">${monthLabel(p.month)}</td>
+      <td class="num">${fmt(p.views)}</td>
+      <td class="num">${fmt(p.reach)}</td>
+      <td>
+        <div class="eng-bar">
+          <div class="bar-bg"><div class="bar-fill ${barClass}" style="width:${barWidth}%"></div></div>
+          <span class="eng-val">${eng.toFixed(1)}%</span>
+        </div>
+      </td>
+      <td class="num">${p.likes}</td>
+      <td class="num">${p.share}</td>
+      <td class="num">${p.save}</td>
+      <td class="num">${p.comment}</td>
+      <td class="num">${p.follow}</td>
+    </tr>`;
+  }).join('');
+}
+
+function render(){
+  const filtered = getFiltered();
+  renderSummary(filtered);
+  renderTable(filtered);
+}
+
+document.querySelectorAll('#tab-bar .tab').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    curMonth = b.dataset.month;
+    document.querySelectorAll('#tab-bar .tab').forEach(x=>x.classList.toggle('active', x===b));
+    render();
+  });
+});
+
+document.querySelectorAll('.sort-btn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    curSort = b.dataset.sort;
+    document.querySelectorAll('.sort-btn').forEach(x=>x.classList.toggle('active', x===b));
+    renderTable(getFiltered());
+  });
+});
+
+render();
+</script>
